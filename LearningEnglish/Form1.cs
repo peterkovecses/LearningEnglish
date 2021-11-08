@@ -12,24 +12,24 @@ namespace LearningEnglish
 {
     public partial class Form1 : Form
     {
-        public int NumberOfQuestions { set; get; } = 0;
-        public string[] Items { set; get; }
-        public List<Word> Words { set; get; }
-        public int ActualQuestionsIndex { set; get; }
-        public List<int> CorrectlyAnsweredQuestionsIndexes { set; get; }
-        public string CorrectAnswer { set; get; } // az aktuális kérdés helyes válasza
-        public List<int> AnswersIndexes { set; get; }
-        public List<int> WrongAnswersIndexes { set; get; }
-        public bool IsEndGame { set; get; } = false;
-        public int CorrectAnswerCount { set; get; } = 0;
+        private int _numberOfQuestions = 0;
+        private string[] _items;
+        private List<Word> _words;
+        private int _actualQuestionsIndex;
+        private List<int> _correctlyAnsweredQuestionsIndexes;
+        private string _correctAnswer;  // az aktuális kérdés helyes válasza
+        private List<int> _answersIndexes;
+        private List<int> _wrongAnswersIndexes;
+        private bool _isEndGame  = false;
+        private int _correctAnswerCount = 0;
 
         public Form1()
         {
             InitializeComponent();
-            Words = new List<Word>();
-            CorrectlyAnsweredQuestionsIndexes = new List<int>();
-            AnswersIndexes = new List<int>();
-            WrongAnswersIndexes = new List<int>();
+            _words = new List<Word>();
+            _correctlyAnsweredQuestionsIndexes = new List<int>();
+            _answersIndexes = new List<int>();
+            _wrongAnswersIndexes = new List<int>();
         }
 
         public void Read()
@@ -40,9 +40,9 @@ namespace LearningEnglish
                 {
                     foreach (string item in File.ReadAllLines("words.txt", Encoding.UTF8))
                     {
-                        Items = item.Split(';');
-                        Word word = new Word(Items[0], Items[1]);
-                        Words.Add(word);
+                        _items = item.Split(';');
+                        Word word = new Word(_items[0], _items[1]);
+                        _words.Add(word);
                     }
                 }
                 catch (Exception ex)
@@ -74,36 +74,36 @@ namespace LearningEnglish
             string answer;
             do
             {
-                answer = Interaction.InputBox("Üdvözöllek a programban! \n\nHány helyes válaszig tartson a feladat? \n(maximum: " + Words.Count + ")", "Learning English", "10");
+                answer = Interaction.InputBox("Üdvözöllek a programban! \n\nHány helyes válaszig tartson a feladat? \n(maximum: " + _words.Count + ")", "Learning English", "10");
                 success = int.TryParse(answer, out var number);
-                NumberOfQuestions = number;
-                if (NumberOfQuestions == 0 && success || answer.Length == 0)
+                _numberOfQuestions = number;
+                if (_numberOfQuestions == 0 && success || answer.Length == 0)
                     Environment.Exit(0);
-            } while (NumberOfQuestions < 0 || NumberOfQuestions > Words.Count || success == false);
+            } while (_numberOfQuestions < 0 || _numberOfQuestions > _words.Count || success == false);
         }
 
         public void MakeTask()
         {
             UncheckRadioButtons();
 
-            if (!IsEndGame)
-                ActualQuestionsIndex = RandomUniqeNumber(0, Words.Count - 1, CorrectlyAnsweredQuestionsIndexes); // véletlen generáljuk a kérdés indexét
+            if (!_isEndGame)
+                _actualQuestionsIndex = RandomUniqeNumber(0, _words.Count - 1, _correctlyAnsweredQuestionsIndexes); // véletlen generáljuk a kérdés indexét
             else
             {
-                ActualQuestionsIndex = WrongAnswersIndexes[0];
-                WrongAnswersIndexes.RemoveAt(0);
+                _actualQuestionsIndex = _wrongAnswersIndexes[0];
+                _wrongAnswersIndexes.RemoveAt(0);
             }
 
             // megkeressük a jó választ, és elmentjük
-            CorrectAnswer = Words[ActualQuestionsIndex].EngName;
+            _correctAnswer = _words[_actualQuestionsIndex].EngName;
             // hozzáadjuk a jó válasz indexét
-            AnswersIndexes.Add(ActualQuestionsIndex);
+            _answersIndexes.Add(_actualQuestionsIndex);
             // legeneráljuk a három rossz válasz indexét
-            AnswersIndexes = SelectWords(AnswersIndexes, 4);
+            _answersIndexes = SelectWords(_answersIndexes, 4);
             // növekvő sorrendbe tesszük a válaszok (index) listáját
-            AnswersIndexes.Sort();
+            _answersIndexes.Sort();
 
-            lbQuestion.Text = "Fordítsd le angolra a következő szót, és válaszd ki a helyes választ!\n\n" + Words[ActualQuestionsIndex].HunName;
+            lbQuestion.Text = "Fordítsd le angolra a következő szót, és válaszd ki a helyes választ!\n\n" + _words[_actualQuestionsIndex].HunName;
 
             DisplayAnswers();
         }
@@ -113,21 +113,21 @@ namespace LearningEnglish
             if (rB1.Checked || rB2.Checked || rB3.Checked || rB4.Checked == true)
             {
                 var checkedButton = rBtnPanel.Controls.OfType<RadioButton>().FirstOrDefault(r => r.Checked);
-                if (checkedButton.Text == CorrectAnswer)
+                if (checkedButton.Text == _correctAnswer)
                 {
                     rBtnPanel.Controls.OfType<RadioButton>().FirstOrDefault(r => r.Checked).ForeColor = Color.Green;
-                    if (!IsEndGame)
-                        CorrectAnswerCount++;
+                    if (!_isEndGame)
+                        _correctAnswerCount++;
                 }
 
                 else
                 {
                     rBtnPanel.Controls.OfType<RadioButton>().FirstOrDefault(r => r.Checked).ForeColor = Color.Red;
-                    rBtnPanel.Controls.OfType<RadioButton>().FirstOrDefault(r => r.Text == CorrectAnswer).ForeColor = Color.Green;
-                    WrongAnswersIndexes.Add(ActualQuestionsIndex);
+                    rBtnPanel.Controls.OfType<RadioButton>().FirstOrDefault(r => r.Text == _correctAnswer).ForeColor = Color.Green;
+                    _wrongAnswersIndexes.Add(_actualQuestionsIndex);
                 }
                 RadioButtonsVisible();
-                CorrectlyAnsweredQuestionsIndexes.Add(ActualQuestionsIndex);
+                _correctlyAnsweredQuestionsIndexes.Add(_actualQuestionsIndex);
                 btnNext.Visible = true;
                 btnOk.Visible = false;
             }
@@ -138,7 +138,7 @@ namespace LearningEnglish
 
         private void btnNext_Click(object sender, EventArgs e)
         {
-            if (CorrectlyAnsweredQuestionsIndexes.Count < NumberOfQuestions || WrongAnswersIndexes.Count > 0)
+            if (_correctlyAnsweredQuestionsIndexes.Count < _numberOfQuestions || _wrongAnswersIndexes.Count > 0)
             {
                 UncheckRadioButtons();
                 RadioButtonsVisible();
@@ -146,14 +146,14 @@ namespace LearningEnglish
                 btnOk.Visible = true;
                 btnNext.Visible = false;
 
-                if (CorrectlyAnsweredQuestionsIndexes.Count == NumberOfQuestions)
-                    IsEndGame = true;
+                if (_correctlyAnsweredQuestionsIndexes.Count == _numberOfQuestions)
+                    _isEndGame = true;
 
                 MakeTask();
             }
             else
             {
-                lbQuestion.Text = "Vége! \n\n" + CorrectAnswerCount + " db kérdésre tudtad elsőre a választ!";
+                lbQuestion.Text = "Vége! \n\n" + _correctAnswerCount + " db kérdésre tudtad elsőre a választ!";
                 rBtnPanel.Visible = false;
                 btnNext.Visible = false;
                 if (MessageBox.Show("Folytatod a tanulást?", "Kérdés", MessageBoxButtons.OKCancel, MessageBoxIcon.Question) == DialogResult.OK)
@@ -183,7 +183,7 @@ namespace LearningEnglish
             int index;
             do
             {
-                index = RandomUniqeNumber(0, Words.Count - 1, list);
+                index = RandomUniqeNumber(0, _words.Count - 1, list);
                 list.Add(index);
             } while (list.Count != piece);
             return list;
@@ -219,10 +219,10 @@ namespace LearningEnglish
             foreach (Control control in controls)
             {
                 RadioButton rb = (RadioButton)control;
-                rb.Text = Words[AnswersIndexes[counter]].EngName;
+                rb.Text = _words[_answersIndexes[counter]].EngName;
                 counter++;
             }
-            AnswersIndexes.Clear();
+            _answersIndexes.Clear();
         }
 
         //public void RadioButtonsSwitch()
@@ -245,7 +245,7 @@ namespace LearningEnglish
                 RadioButton rb = (RadioButton)control;
                 if (rBtnPanel.Controls.OfType<RadioButton>().FirstOrDefault(r => r.Checked) != null)
                 {
-                    if (!rb.Checked && rb.Text != CorrectAnswer)
+                    if (!rb.Checked && rb.Text != _correctAnswer)
                     {
                         rb.Visible = false;
                     }
