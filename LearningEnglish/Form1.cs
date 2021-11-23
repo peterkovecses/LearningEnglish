@@ -166,7 +166,7 @@ namespace LearningEnglish
             }
         }
 
-        public int RandomUniqeNumber(int min, int max, List<int> list)
+        public static int RandomUniqeNumber(int min, int max, IEnumerable<int> list)
         {
             int randomUniqeNumber;
             Random r = new Random();
